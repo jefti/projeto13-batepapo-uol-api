@@ -84,8 +84,13 @@ app.post("/participants", async (req,res)=>{
     try{
         const resp = await db.collection("participants").findOne({name});
         if (resp) return res.status(409).send("Nome já está em uso");
-        const obj = {name:stripHtml(name).result.trim(), lastStatus: Date.now()};
+        const obj = {name:stripHtml(toString(name)).result.trim(), lastStatus: Date.now()};
         const mensagem = {from:name, to:'Todos',text:'entra na sala...',type:'status',time:dayjs().format('HH:mm:ss')}
+        const validation1 = participantSchema.validate({name,lastStatus: Date.now()})
+        if (validation1.error){
+            const erros = validation1.error.details.map((detail)=> detail.message);
+            return res.status(422).send(erros);
+        }
         const validation = participantSchema.validate(obj);
         if (validation.error){
             const erros = validation.error.details.map((detail)=> detail.message);
