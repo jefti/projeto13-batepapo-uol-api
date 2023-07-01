@@ -58,7 +58,7 @@ app.get("/messages",async (req,res)=>{
     try{
         if(limit){
             if(limit <= 0 || isNaN(limit)){
-                return res.status(422).send('limite informdo é inválido');
+                return res.status(422).send('O limite informado é inválido');
             }
             const mensagens = await db.collection("messages").find({$or: [{from:user},{to:user},{to:"Todos"}]}).limit(limit).toArray()
             return res.send(mensagens);
@@ -116,8 +116,22 @@ app.post("/messages",async (req,res)=>{
 
 });
 
-app.post("/status",(req,res)=>{
-    res.send("Atualizado Status");
+app.post("/status",async (req,res)=>{
+    const User = req.headers.user;
+    try{
+        if (!User) return res.sendStatus(404);
+        const resp = await db.collection("participants").findOne({name:User});
+        if(!resp) return res.status(404).send('Usuario não está na lista de participantes');
+        const patch = {_id: resp._id, name:resp.name, lastStatus: Date.now()};
+        await db.collection("participants").updateOne(
+            {name: User},
+            {$set: patch}
+        );
+        const atualizacao = await db.collection("participants").findOne({name:User});
+        return res.send(atualizacao);
+    }catch (err){
+        return res.status(500).send(err.message);
+    }
 });
 
 
