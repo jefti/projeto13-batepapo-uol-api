@@ -53,13 +53,29 @@ app.get("/participants",async (req,res)=>{
 });
 
 app.get("/messages",async (req,res)=>{
-    await db.collection("messages").find().toArray()
-    .then(mensagens => res.send(mensagens));
+    const user = req.headers.user;
+    const limit = Number(req.query.limit);
+    try{
+        if(limit){
+            if(limit <= 0 || isNaN(limit)){
+                return res.status(422).send('limite informdo é inválido');
+            }
+            const mensagens = await db.collection("messages").find({$or: [{from:user},{to:user},{to:"Todos"}]}).limit(limit).toArray()
+            return res.send(mensagens);
+        } else {
+            const mensagens = await db.collection("messages").find({$or: [{from:user},{to:user},{to:"Todos"}]}).toArray()
+            return res.send(mensagens);
+        }
+    }catch (err){
+        return res.status(500).send(err.message);
+    }
+
 });
 
     //4.2 funções Post
 app.post("/participants", async (req,res)=>{
     const {name} = req.body;
+
     try{
         const resp = await db.collection("participants").findOne({name});
         if (resp) return res.status(409).send("Nome já está em uso");
