@@ -146,7 +146,7 @@ async function Desligar(){
     });
 }
 
-setInterval(Desligar,10000);
+setInterval(Desligar,15000);
 
 
 //6. Ligar na porta específicada
