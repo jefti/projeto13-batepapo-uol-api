@@ -54,10 +54,10 @@ app.get("/participants",async (req,res)=>{
 
 app.get("/messages",async (req,res)=>{
     const user = req.headers.user;
-    const limit = Number(req.query.limit);
     try{
-        if(limit){
-            if(limit <= 0 || isNaN(limit)){
+        if(req.query.limit){
+            const limit = Number(req.query.limit);
+            if(limit < 1 || isNaN(limit)){
                 return res.status(422).send('O limite informado é inválido');
             }
             const mensagens = await db.collection("messages").find({$or: [{from:user},{to:user},{to:"Todos"}]}).limit(limit).toArray()
@@ -141,7 +141,7 @@ async function Desligar(){
     lista.forEach((el)=>{
         db.collection("participants").deleteOne({_id: new ObjectId(el._id)})
             .then(
-                db.collection("messages").insertOne({from:el.name , to:"Todos",text:"sai da sala",type:"status",time:dayjs().format('HH:mm:ss')})
+                db.collection("messages").insertOne({from:el.name , to:"Todos",text:"sai da sala...",type:"status",time:dayjs().format('HH:mm:ss')})
             );
     });
 }
