@@ -79,11 +79,12 @@ app.get("/messages",async (req,res)=>{
 
     //4.2 funções Post
 app.post("/participants", async (req,res)=>{
-    const name = stripHtml(req.body.name).result.trim();
+    if(!req.body.name) return res.sendStatus(422);
+    const name = req.body.name;
     try{
         const resp = await db.collection("participants").findOne({name});
         if (resp) return res.status(409).send("Nome já está em uso");
-        const obj = {name, lastStatus: Date.now()};
+        const obj = {name:stripHtml(name).result.trim(), lastStatus: Date.now()};
         const mensagem = {from:name, to:'Todos',text:'entra na sala...',type:'status',time:dayjs().format('HH:mm:ss')}
         const validation = participantSchema.validate(obj);
         if (validation.error){
@@ -101,6 +102,7 @@ app.post("/participants", async (req,res)=>{
 });
     
 app.post("/messages",async (req,res)=>{
+    if(!req.body.to || !req.body.text ||!req.body.type ||!req.headers.user) return res.sendStatus(422);
     const to =  stripHtml(req.body.to).result.trim();
     const text =  stripHtml(req.body.text).result.trim();
     const type = stripHtml(req.body.type).result.trim();
@@ -151,7 +153,7 @@ app.delete("/messages/:ID", async (req,res)=>{
         if(msg.from !== User) return res.sendStatus(401);
         const result = await db.collection("messages").deleteOne({_id: new ObjectId(ID)});
         if(result.deleteCount === 0) return res.sendStatus(404);
-        res.status(204).send("Mensagem apagada");
+        res.status(200).send("Mensagem apagada");
      }catch(err){
         return res.status(500).send(err.message);
      }
