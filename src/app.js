@@ -4,6 +4,8 @@ import { MongoClient, ObjectId } from 'mongodb';
 import dotenv from 'dotenv';
 import joi from 'joi';
 import dayjs from 'dayjs';
+import { strict as assert } from "assert";
+import { stripHtml } from "string-strip-html";
 
 //1. Criar o app
 const app = express();
@@ -36,6 +38,8 @@ const mensagemSchema = joi.object({
     text: joi.string().required(),
     time: joi.required()
 })
+
+
 
 
 //4. Funções de Endpoint
@@ -75,8 +79,8 @@ app.get("/messages",async (req,res)=>{
 
     //4.2 funções Post
 app.post("/participants", async (req,res)=>{
-    const {name} = req.body;
-
+    const name = stripHtml(req.body.name).result.trim();
+    res.send(name);
     try{
         const resp = await db.collection("participants").findOne({name});
         if (resp) return res.status(409).send("Nome já está em uso");
@@ -98,8 +102,10 @@ app.post("/participants", async (req,res)=>{
 });
     
 app.post("/messages",async (req,res)=>{
-    const {to, text, type} = req.body;
-    const user = req.headers.user;
+    const to =  stripHtml(req.body.to).result.trim();
+    const text =  stripHtml(req.body.text).result.trim();
+    const type = stripHtml(req.body.type).result.trim();
+    const user = stripHtml(req.headers.user).result.trim();
     try{
         const resp = await db.collection("participants").findOne({name: user});
         if(!resp) return res.status(422).send('Usuario não está na lista!');
