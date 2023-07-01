@@ -28,6 +28,14 @@ const participantSchema = joi.object({
     lastStatus: joi.required()
 });
 
+const mensagemSchema = joi.object({
+    from: joi.string().required(),
+    to: joi.string().required(),
+    type: joi.string().valid('message','private_message').required(),
+    text: joi.string().required(),
+    time: joi.required()
+})
+
 
 //4. Funções de Endpoint
 app.get("/",(req,res)=>{
@@ -72,7 +80,23 @@ app.post("/participants", async (req,res)=>{
 
 });
     
-app.post("/messages",(req,res)=>{
+app.post("/messages",async (req,res)=>{
+    const {to, text, type} = req.body;
+    const user = req.headers.user;
+    try{
+        const resp = await db.collection("participants").findOne({name: user});
+        if(!resp) return res.status(422).send('Usuario não está na lista!');
+        const obj = {from: user,to,type,text,time:dayjs().format('HH:mm:ss')};
+        const validation = mensagemSchema.validate(obj);
+        if(validation.error){
+            const errors = validation.error.details.map((detail)=> detail.message);
+            return res.status(422).send(errors);
+        }
+        await db.collection("messages").insertOne(obj);
+        return res.sendStatus(201);
+    }catch (err){
+        return res.status(500).send(err.message);
+    }
 
 });
 
