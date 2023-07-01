@@ -29,6 +29,7 @@ const participantSchema = joi.object({
 });
 
 const mensagemSchema = joi.object({
+    _id:joi.string(),
     from: joi.string().required(),
     to: joi.string().required(),
     type: joi.string().valid('message','private_message').required(),
@@ -150,6 +151,36 @@ app.delete("/messages/:ID", async (req,res)=>{
         return res.status(500).send(err.message);
      }
 })
+
+
+
+
+app.put("/messages/:ID", async (req,res)=>{
+    const {to, text, type} = req.body;
+    const User = req.headers.user;
+    const ID = req.params.ID;
+    try{
+        const msg = await db.collection("messages").findOne({_id:new ObjectId(ID)});
+        if(!msg) return res.sendStatus(404);
+        if(msg.from !== User) return res.sendStatus(401);
+        const obj = {from:User,to,text,type, time: msg.time};
+        const validation = mensagemSchema.validate(obj);
+        if(validation.error){
+            const errors = validation.error.details.map((detail)=> detail.message);
+            return res.status(422).send(errors);
+        }
+        await db.collection("messages").updateOne(
+            {_id:new ObjectId(ID)},
+            {$set: obj}
+        );
+        const atualizacao = await db.collection("messages").findOne({_id:new ObjectId(ID)});
+        return res.send(atualizacao);
+    }catch(err){
+        return res.status(500).send(err.message);
+    }
+
+});
+
 //5. Função de desolgar usuarios desativos 
 async function Desligar(){
     const tempo = Date.now()-10000;
