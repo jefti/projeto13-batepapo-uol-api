@@ -134,6 +134,22 @@ app.post("/status",async (req,res)=>{
     }
 });
 
+    //4.3 Funções Bônus
+
+app.delete("/messages/:ID", async (req,res)=>{
+    const User = req.headers.user;
+    const ID = req.params.ID;
+     try{
+        const msg = await db.collection("messages").findOne({_id:new ObjectId(ID)});
+        if(!msg) return res.sendStatus(404);
+        if(msg.from !== User) return res.sendStatus(401);
+        const result = await db.collection("messages").deleteOne({_id: new ObjectId(ID)});
+        if(result.deleteCount === 0) return res.sendStatus(404);
+        res.status(204).send("Mensagem apagada");
+     }catch(err){
+        return res.status(500).send(err.message);
+     }
+})
 //5. Função de desolgar usuarios desativos 
 async function Desligar(){
     const tempo = Date.now()-10000;
