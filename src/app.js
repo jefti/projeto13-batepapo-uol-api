@@ -80,7 +80,6 @@ app.get("/messages",async (req,res)=>{
     //4.2 funções Post
 app.post("/participants", async (req,res)=>{
     const name = stripHtml(req.body.name).result.trim();
-    res.send(name);
     try{
         const resp = await db.collection("participants").findOne({name});
         if (resp) return res.status(409).send("Nome já está em uso");
