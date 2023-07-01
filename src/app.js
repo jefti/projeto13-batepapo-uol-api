@@ -1,6 +1,6 @@
 import express from 'express'
 import cors from 'cors'
-import { MongoClient } from 'mongodb';
+import { MongoClient, ObjectId } from 'mongodb';
 import dotenv from 'dotenv';
 import joi from 'joi';
 import dayjs from 'dayjs';
@@ -134,14 +134,26 @@ app.post("/status",async (req,res)=>{
     }
 });
 
+//5. Função de desolgar usuarios desativos 
+async function Desligar(){
+    const tempo = Date.now()-10000;
+    const lista = await db.collection("participants").find({ lastStatus: { $lt: tempo } }).toArray();
+    lista.forEach((el)=>{
+        db.collection("participants").deleteOne({_id: new ObjectId(el._id)})
+            .then(
+                db.collection("messages").insertOne({from:el.name , to:"Todos",text:"sai da sala",type:"status",time:dayjs().format('HH:mm:ss')})
+            );
+    });
+}
+
+setInterval(Desligar,10000);
 
 
-//5. Ligar na porta específicada
+//6. Ligar na porta específicada
 const Port = 5000;
 const now = new Date;
 const nomeDia = ["Domingo", "Segunda", "Terça","Quarta","Quinta","Sexta","Sábado"];
 const nomeMes = ["Janeiro", "Fevereiro","Março","Abril","Maio","Junho","JUllho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 app.listen(Port, ()=> {
-console.log(`Servidor rodando na porta ${Port} ${nomeMes[now.getMonth()]}`);
-console.log(dayjs().format('HH:mm:ss'));
+console.log(`Servidor rodando na porta ${Port}`)
 });
