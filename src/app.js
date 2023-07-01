@@ -35,8 +35,13 @@ app.get("/",(req,res)=>{
 });
 
     //4.1 funções Get
-app.get("/participants",(req,res)=>{
-    res.send("Retornado lista de participantes");
+app.get("/participants",async (req,res)=>{
+    try{
+        await db.collection("participants").find().toArray()
+            .then( participantes => res.send(participantes))
+    }catch(err){
+        return res.status(500).send(err.message);
+    }
 });
 
 app.get("/messages",async (req,res)=>{
